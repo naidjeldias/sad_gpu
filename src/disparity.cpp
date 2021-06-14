@@ -4,7 +4,7 @@ double compute_disparity ( const cv::Mat &im_l, const cv::Mat &im_r, const int &
     const int &disp_range, cv::Mat disp_map
 )
 {
-    double time = 0.0;
+    auto start = std::chrono::steady_clock::now();
     for (int y = win_size/2; y < im_l.rows - win_size/2; y++){
         for(int x = win_size/2; x < im_l.cols - win_size/2; x++){
             int min_sad     = INT_MAX;
@@ -23,6 +23,8 @@ double compute_disparity ( const cv::Mat &im_l, const cv::Mat &im_r, const int &
             disp_map.at<uchar>(y,x) = disp_value;
         }
     }
+    auto end = std::chrono::steady_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     return time;
 }
 

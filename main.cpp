@@ -35,11 +35,11 @@ int main(int argc, const char* argv[])
 	cv::Mat  		disp_map_gpu 		(im_left.size(), im_left.type(), cv::Scalar::all(0));
 	cv::cuda::GpuMat  d_disp_map_gpu 	(im_left.size(), im_left.type(), cv::Scalar::all(0));
 
-	std::cout << "computing on cpu ... " << std::endl;
 	double cpu_time = compute_disparity (im_left, im_right, win_size, max_range, disp_map);
-	std::cout << "computing on gpu ... " << std::endl;
+	std::cout << "time elapsed on cpu: " << cpu_time <<" ms" << std::endl;
 	double gpu_time = compute_disparity_gpu(im_left_gpu, im_right_gpu, win_size, max_range, d_disp_map_gpu);
-
+	std::cout << "time elapsed on gpu: " << gpu_time <<" ms" << std::endl;
+	
 	cv::imshow("left", im_left);
 	cv::imshow("right", im_right);
 

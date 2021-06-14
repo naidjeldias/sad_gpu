@@ -51,9 +51,12 @@ double compute_disparity_gpu (const cv::cuda::GpuMat &im_l, const cv::cuda::GpuM
 {
     const dim3 block(64, 2);
 	const dim3 grid(cv::cudev::divUp(disp_map.cols, block.x), cv::cudev::divUp(disp_map.rows, block.y));
-    double time = 0.0;
+    
+    auto start = std::chrono::steady_clock::now();
     compute_sad<<<grid, block>>>(im_l, im_r, win_size, disp_range, disp_map);
     CV_CUDEV_SAFE_CALL(cudaGetLastError());
 	CV_CUDEV_SAFE_CALL(cudaDeviceSynchronize());
+    auto end = std::chrono::steady_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     return time;
 }
