@@ -4,14 +4,14 @@
 #include <cuda_runtime.h>
 
 __device__ int compute_sad(const cv::cudev::PtrStepSz<uchar> im_l, const cv::cudev::PtrStepSz<uchar> im_r,
-            const int &win_size, const int lx, const int ly, const int rx, const int ry)
+            const int &win_size, const int x, const int y, const int d)
 {
     int start = -(win_size )/2;
 	int stop  = win_size -1;
 	int sad_value = 0;
 	for(int i = start; i < stop; i++)
 		for(int j = start; j < stop; j++)
-			sad_value += abs((int)im_l.ptr(ly + j)[lx + i] - (int)im_r.ptr(ry + j)[rx + i]);
+			sad_value += abs((int)im_l.ptr(y + j)[x + i] - (int)im_r.ptr(y + j)[x - d + i]);
 	return sad_value;
 }
 __global__ 
@@ -32,7 +32,7 @@ void compute_sad (const cv::cudev::PtrStepSz<uchar> im_l, const cv::cudev::PtrSt
             {
                 if((x + d) >= (im_l.cols - win_size/2))
                     break;
-                int sad_value = compute_sad(im_l, im_r, win_size, x, y, (x - d), y);
+                int sad_value = compute_sad(im_l, im_r, win_size, x, y, d);
                 if (sad_value < min_sad)
                 {
                     min_sad     = sad_value;

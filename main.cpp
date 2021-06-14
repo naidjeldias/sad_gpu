@@ -35,17 +35,17 @@ int main(int argc, const char* argv[])
 	cv::Mat  		disp_map_gpu 		(im_left.size(), im_left.type(), cv::Scalar::all(0));
 	cv::cuda::GpuMat  d_disp_map_gpu 	(im_left.size(), im_left.type(), cv::Scalar::all(0));
 
-	// std::cout << "computing on cpu ... " << std::endl;
-	// double cpu_time = compute_disparity (im_left, im_right, win_size, max_range, disp_map);
+	std::cout << "computing on cpu ... " << std::endl;
+	double cpu_time = compute_disparity (im_left, im_right, win_size, max_range, disp_map);
 	std::cout << "computing on gpu ... " << std::endl;
 	double gpu_time = compute_disparity_gpu(im_left_gpu, im_right_gpu, win_size, max_range, d_disp_map_gpu);
 
 	cv::imshow("left", im_left);
 	cv::imshow("right", im_right);
 
-	// cv::medianBlur(disp_map,disp_map,3);
-	// cv::normalize(disp_map,disp_map,0,255,cv::NORM_MINMAX,CV_8UC1);
-	// cv::imshow("disparity", disp_map);
+	cv::medianBlur(disp_map,disp_map,3);
+	cv::normalize(disp_map,disp_map,0,255,cv::NORM_MINMAX,CV_8UC1);
+	cv::imshow("disparity", disp_map);
 
 	d_disp_map_gpu.download(disp_map_gpu);
 	cv::medianBlur(disp_map_gpu,disp_map_gpu,3);
