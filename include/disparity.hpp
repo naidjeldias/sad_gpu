@@ -17,6 +17,7 @@ int compute_sad
     const cv::Mat &im_l,
     const cv::Mat &im_r,
     const int &win_size,
-    const cv::Point2i p_l,
-    const cv::Point2i p_r
+    const int x,
+    const int y,
+    const int d
 );
