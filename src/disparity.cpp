@@ -5,22 +5,22 @@ double compute_disparity ( const cv::Mat &im_l, const cv::Mat &im_r, const int &
 )
 {
     double time = 0.0;
-    for (int i = win_size/2; i < im_l.rows - win_size/2; i++){
-        for(int j = win_size/2; j < im_l.cols - win_size/2; j++){
+    for (int x = win_size/2; x < im_l.rows - win_size/2; x++){
+        for(int y = win_size/2; y < im_l.cols - win_size/2; y++){
             int min_sad     = INT_MAX;
             int disp_value  = 0.0;
-            for(int k = 0; k < disp_range; k++)
+            for(int d = 0; d < disp_range; d++)
             {
-                if((j + k) >= (im_l.cols - win_size/2))
+                if((y + d) >= (im_l.cols - win_size/2))
                     break;
-                int sad_value = compute_sad(im_l, im_r, win_size, cv::Point2i(j,i), cv::Point2i(j-k,i));
+                int sad_value = compute_sad(im_l, im_r, win_size, cv::Point2i(y,x), cv::Point2i(y-d,x));
                 if (sad_value < min_sad)
                 {
                     min_sad     = sad_value;
-                    disp_value  = k;
+                    disp_value  = d;
                 }
             }
-            disp_map.at<uchar>(i,j) = disp_value;
+            disp_map.at<uchar>(x,y) = disp_value;
         }
     }
     return time;
