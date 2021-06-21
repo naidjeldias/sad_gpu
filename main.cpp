@@ -19,8 +19,16 @@ int main(int argc, const char* argv[])
     cv::Mat im_left     = cv::imread("images/im2.ppm", cv::IMREAD_GRAYSCALE);
     cv::Mat im_right    = cv::imread("images/im6.ppm", cv::IMREAD_GRAYSCALE);
 
+	//TO DO: image padding
+	//Input
 	cv::cuda::GpuMat im_left_gpu  (im_left);
     cv::cuda::GpuMat im_right_gpu (im_right);
+
+	//Output
+	disp_map 			= cv::Mat(im_left.rows, im_left.cols, CV_8UC1, cv::Scalar::all(0));
+
+	cv::Mat  			disp_map_gpu 	(im_left.size(), im_left.type(), cv::Scalar::all(0));
+	cv::cuda::GpuMat  	d_disp_map_gpu 	(im_left.size(), im_left.type(), cv::Scalar::all(0));
 
     if(im_left.empty() || im_right.empty())
 	{
@@ -30,11 +38,6 @@ int main(int argc, const char* argv[])
 
 	std::cout << "computing disparity with win size "<< win_size << " and max disparity equal to "<< max_range << std::endl;
 	
-	disp_map 		= cv::Mat(im_left.rows, im_left.cols, CV_8UC1, cv::Scalar::all(0));
-	
-	cv::Mat  		disp_map_gpu 		(im_left.size(), im_left.type(), cv::Scalar::all(0));
-	cv::cuda::GpuMat  d_disp_map_gpu 	(im_left.size(), im_left.type(), cv::Scalar::all(0));
-
 	double cpu_time = compute_disparity (im_left, im_right, win_size, max_range, disp_map);
 	std::cout << "time elapsed on cpu: " << cpu_time <<" ms" << std::endl;
 	double gpu_time = compute_disparity_gpu(im_left_gpu, im_right_gpu, win_size, max_range, d_disp_map_gpu);
@@ -47,10 +50,16 @@ int main(int argc, const char* argv[])
 	cv::normalize(disp_map,disp_map,0,255,cv::NORM_MINMAX,CV_8UC1);
 	cv::imshow("disparity", disp_map);
 
+	//Copy data from device to host
 	d_disp_map_gpu.download(disp_map_gpu);
+	
+	//Normalization for visualization purpose
 	cv::medianBlur(disp_map_gpu,disp_map_gpu,3);
 	cv::normalize(disp_map_gpu,disp_map_gpu,0,255,cv::NORM_MINMAX,CV_8UC1);
 	cv::imshow("disparity_gpu", disp_map_gpu);
+
+	cv::imwrite("gpu_map.png", disp_map_gpu);
+	cv::imwrite("cpu_map.png", disp_map);
 	
 	cv::waitKey(0);
 	cv::destroyAllWindows();
