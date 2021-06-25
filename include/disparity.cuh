@@ -2,12 +2,13 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/cuda.hpp>
 #include <chrono>
+#include <device_launch_parameters.h>
 
 double compute_disparity_gpu
 (
-    const cv::cuda::GpuMat &im_l,
-    const cv::cuda::GpuMat &im_r,
+    const cv::Mat &im_l,
+    const cv::Mat &im_r,
     const int &win_size,
     const int &disp_range,
-    cv::cuda::GpuMat &disp_map
+    cv::Mat &disp_map
 );

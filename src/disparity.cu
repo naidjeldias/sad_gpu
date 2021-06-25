@@ -1,5 +1,4 @@
 #include <disparity.cuh>
-// #include <opencv2/core/cuda/common.hpp>
 #include <opencv2/cudev.hpp>
 #include <cuda_runtime.h>
 
@@ -56,22 +55,41 @@ void compute_sad (const cv::cudev::PtrStepSz<uchar> im_l, const cv::cudev::PtrSt
 }
 
 
-double compute_disparity_gpu (const cv::cuda::GpuMat &im_l, const cv::cuda::GpuMat &im_r,
-    const int &win_size, const int &disp_range, cv::cuda::GpuMat &disp_map)
+double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
+    const int &win_size, const int &disp_range, cv::Mat &disp_map)
 {
+    int deviceId;
+    cudaGetDevice(&deviceId);
+
+    cv::cuda::GpuMat im_l   (im_left.size(), CV_8UC1);
+    im_l.upload (im_left);
+    cv::cuda::GpuMat im_r   (im_right.size(), CV_8UC1);
+    im_r.upload(im_right);
+
+    void *disp_map_ptr;
+	unsigned int frameByteSize = im_left.rows * im_left.cols;
+	cudaMallocManaged(&disp_map_ptr, frameByteSize);
+    cv::cuda::GpuMat  	d_disp_map_gpu 	(im_left.size(), CV_8UC1, disp_map_ptr);
+
+    cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, deviceId);
+
     const dim3 threadsPerBlock(32, 32);
 	const dim3 blocksPerGrid(cv::cudev::divUp(disp_map.cols, threadsPerBlock.x), 
                         cv::cudev::divUp(disp_map.rows, threadsPerBlock.y));
-    
+
     auto start = std::chrono::steady_clock::now();
     
-    compute_sad<<<blocksPerGrid, threadsPerBlock>>>(im_l, im_r, win_size, disp_range, disp_map);
+    compute_sad<<<blocksPerGrid, threadsPerBlock>>>(im_l, im_r, win_size, disp_range, d_disp_map_gpu);
     
     CV_CUDEV_SAFE_CALL(cudaGetLastError());
 	CV_CUDEV_SAFE_CALL(cudaDeviceSynchronize());
     
     auto end = std::chrono::steady_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    
+
+    cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, cudaCpuDeviceId);
+    //Copy data from device to host
+	d_disp_map_gpu.download(disp_map);
+
     return time;
 }
