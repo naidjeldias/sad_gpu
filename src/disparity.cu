@@ -60,25 +60,37 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
 {
     int deviceId;
     cudaGetDevice(&deviceId);
+    unsigned int frameByteSize = im_left.rows * im_left.cols;
 
-    cv::cuda::GpuMat im_l   (im_left.size(), CV_8UC1);
-    im_l.upload (im_left);
-    cv::cuda::GpuMat im_r   (im_right.size(), CV_8UC1);
-    im_r.upload(im_right);
+    //Input 
+    void *im_letf_ptr;
+    cudaMallocManaged(&im_letf_ptr, frameByteSize);
+    cudaMemcpy(im_letf_ptr, im_left.ptr(), frameByteSize, cudaMemcpyHostToDevice);
+    cv::cuda::GpuMat im_l   (im_left.size(), CV_8UC1, im_letf_ptr);
 
-    void *disp_map_ptr;
-	unsigned int frameByteSize = im_left.rows * im_left.cols;
+    void *im_right_ptr;
+    cudaMallocManaged(&im_right_ptr, frameByteSize);
+    cudaMemcpy(im_right_ptr, im_right.ptr(), frameByteSize, cudaMemcpyHostToDevice);
+    cv::cuda::GpuMat im_r   (im_right.size(), CV_8UC1, im_right_ptr);
+
+    //Output
+    void *disp_map_ptr;	
 	cudaMallocManaged(&disp_map_ptr, frameByteSize);
+    cudaMemset(disp_map_ptr, 0, frameByteSize*sizeof(uchar));
     cv::cuda::GpuMat  	d_disp_map_gpu 	(im_left.size(), CV_8UC1, disp_map_ptr);
+    
 
+    //Prefetching data
+    cudaMemPrefetchAsync(im_letf_ptr, frameByteSize, deviceId);
+    cudaMemPrefetchAsync(im_right_ptr, frameByteSize, deviceId);
     cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, deviceId);
 
-    const dim3 threadsPerBlock(32, 32);
+    const dim3 threadsPerBlock(16, 16);
 	const dim3 blocksPerGrid(cv::cudev::divUp(disp_map.cols, threadsPerBlock.x), 
                         cv::cudev::divUp(disp_map.rows, threadsPerBlock.y));
-
-    auto start = std::chrono::steady_clock::now();
     
+    auto start = std::chrono::steady_clock::now();
+
     compute_sad<<<blocksPerGrid, threadsPerBlock>>>(im_l, im_r, win_size, disp_range, d_disp_map_gpu);
     
     CV_CUDEV_SAFE_CALL(cudaGetLastError());
@@ -87,9 +99,13 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
     auto end = std::chrono::steady_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, cudaCpuDeviceId);
     //Copy data from device to host
-	d_disp_map_gpu.download(disp_map);
+    cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, cudaCpuDeviceId);
+    cudaMemcpy(disp_map.ptr(), d_disp_map_gpu.ptr(), frameByteSize, cudaMemcpyDeviceToHost);
+
+    cudaFree(im_letf_ptr);
+    cudaFree(im_right_ptr);
+    cudaFree(disp_map_ptr);
 
     return time;
 }
