@@ -65,7 +65,8 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
 
     cudaError_t dispMapErr;
     cudaError_t asyncErr;
-    cudaDeviceSynchronize();
+
+    cudaDeviceSynchronize(); //this synchronize call is just to initialize the cuda runtime
     
     auto start = std::chrono::steady_clock::now();
 
