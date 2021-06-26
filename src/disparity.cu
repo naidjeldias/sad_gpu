@@ -62,21 +62,29 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
     int deviceId;
     cudaGetDevice(&deviceId);
     unsigned int frameByteSize = im_left.rows * im_left.cols;
+
+    cudaError_t dispMapErr;
+    cudaError_t asyncErr;
+    cudaDeviceSynchronize();
     
+    auto start = std::chrono::steady_clock::now();
+
     //Input 
     unsigned char *im_letf_ptr;
     cudaMallocManaged(&im_letf_ptr, frameByteSize);
-    cudaMemcpy(im_letf_ptr, im_left.ptr(), frameByteSize, cudaMemcpyHostToDevice);
-
     unsigned char *im_right_ptr;
     cudaMallocManaged(&im_right_ptr, frameByteSize);
-    cudaMemcpy(im_right_ptr, im_right.ptr(), frameByteSize, cudaMemcpyHostToDevice);
 
     //Output
     unsigned char *disp_map_ptr;	
 	cudaMallocManaged(&disp_map_ptr, frameByteSize);
+
+   
+    //Copying data
+    cudaMemcpy(im_letf_ptr, im_left.ptr(), frameByteSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(im_right_ptr, im_right.ptr(), frameByteSize, cudaMemcpyHostToDevice);
     cudaMemset(disp_map_ptr, 0, frameByteSize*sizeof(uchar));
-    
+
     //Prefetching data
     cudaMemPrefetchAsync(im_letf_ptr, frameByteSize, deviceId);
     cudaMemPrefetchAsync(im_right_ptr, frameByteSize, deviceId);
@@ -86,13 +94,15 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
 	const dim3 blocksPerGrid(cv::cudev::divUp(disp_map.cols, threadsPerBlock.x), 
                         cv::cudev::divUp(disp_map.rows, threadsPerBlock.y));
     
-    auto start = std::chrono::steady_clock::now();
 
     compute_sad<<<blocksPerGrid, threadsPerBlock>>>(im_letf_ptr, im_right_ptr, win_size, disp_range, disp_map_ptr, disp_map.cols, disp_map.rows);
     
-    CV_CUDEV_SAFE_CALL(cudaGetLastError());
-	CV_CUDEV_SAFE_CALL(cudaDeviceSynchronize());
-    
+    dispMapErr = cudaGetLastError();
+      if(dispMapErr != cudaSuccess) printf("Error: %s\n", cudaGetErrorString(dispMapErr));
+  
+    asyncErr = cudaDeviceSynchronize();
+      if(asyncErr != cudaSuccess) printf("Error: %s\n", cudaGetErrorString(asyncErr));
+
     auto end = std::chrono::steady_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
