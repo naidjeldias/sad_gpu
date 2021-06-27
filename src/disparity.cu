@@ -72,13 +72,13 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
 
     //Input 
     unsigned char *im_letf_ptr;
-    cudaMallocManaged(&im_letf_ptr, frameByteSize);
+    cudaMalloc(&im_letf_ptr, frameByteSize);
     unsigned char *im_right_ptr;
-    cudaMallocManaged(&im_right_ptr, frameByteSize);
+    cudaMalloc(&im_right_ptr, frameByteSize);
 
     //Output
     unsigned char *disp_map_ptr;	
-	cudaMallocManaged(&disp_map_ptr, frameByteSize);
+	cudaMalloc(&disp_map_ptr, frameByteSize);
 
    
     //Copying data
@@ -91,7 +91,7 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
     cudaMemPrefetchAsync(im_right_ptr, frameByteSize, deviceId);
     cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, deviceId);
 
-    const dim3 threadsPerBlock(16, 16);
+    const dim3 threadsPerBlock(32, 32);
 	const dim3 blocksPerGrid(cv::cudev::divUp(disp_map.cols, threadsPerBlock.x), 
                         cv::cudev::divUp(disp_map.rows, threadsPerBlock.y));
     
@@ -104,12 +104,12 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
     asyncErr = cudaDeviceSynchronize();
       if(asyncErr != cudaSuccess) printf("Error: %s\n", cudaGetErrorString(asyncErr));
 
-    auto end = std::chrono::steady_clock::now();
-    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
     //Copy data from device to host
     cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, cudaCpuDeviceId);
     cudaMemcpy(disp_map.ptr(), disp_map_ptr, frameByteSize, cudaMemcpyDeviceToHost);
+
+    auto end = std::chrono::steady_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     cudaFree(im_letf_ptr);
     cudaFree(im_right_ptr);
