@@ -79,17 +79,11 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
     //Output
     unsigned char *disp_map_ptr;	
 	cudaMalloc(&disp_map_ptr, frameByteSize);
-    
-    //Prefetching data
-    cudaMemPrefetchAsync(im_letf_ptr, frameByteSize, deviceId);
-    cudaMemPrefetchAsync(im_right_ptr, frameByteSize, deviceId);
-    cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, deviceId);
-   
+
     //Copying data
     cudaMemcpy(im_letf_ptr, im_left.ptr(), frameByteSize, cudaMemcpyHostToDevice);
     cudaMemcpy(im_right_ptr, im_right.ptr(), frameByteSize, cudaMemcpyHostToDevice);
     cudaMemset(disp_map_ptr, 0, frameByteSize*sizeof(uchar));
-
 
     const dim3 threadsPerBlock(32, 32);
 	const dim3 blocksPerGrid(cv::cudev::divUp(disp_map.cols, threadsPerBlock.x), 
@@ -99,13 +93,12 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
     compute_sad<<<blocksPerGrid, threadsPerBlock>>>(im_letf_ptr, im_right_ptr, win_size, disp_range, disp_map_ptr, disp_map.cols, disp_map.rows);
     
     dispMapErr = cudaGetLastError();
-      if(dispMapErr != cudaSuccess) printf("Error: %s\n", cudaGetErrorString(dispMapErr));
+      if(dispMapErr != cudaSuccess) printf("Last error: %s\n", cudaGetErrorString(dispMapErr));
   
     asyncErr = cudaDeviceSynchronize();
-      if(asyncErr != cudaSuccess) printf("Error: %s\n", cudaGetErrorString(asyncErr));
+      if(asyncErr != cudaSuccess) printf("Device synchrinize error: %s\n", cudaGetErrorString(asyncErr));
 
     //Copy data from device to host
-    cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, cudaCpuDeviceId);
     cudaMemcpy(disp_map.ptr(), disp_map_ptr, frameByteSize, cudaMemcpyDeviceToHost);
 
     auto end = std::chrono::steady_clock::now();
