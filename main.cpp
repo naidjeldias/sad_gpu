@@ -32,11 +32,17 @@ int main(int argc, const char* argv[])
 	}
 
 	std::cout << "computing disparity with win size "<< win_size << " and max disparity equal to "<< max_range << std::endl;
-	
-	double cpu_time = compute_disparity (im_left, im_right, win_size, max_range, disp_map);
-	std::cout << "time elapsed on cpu: " << cpu_time <<" ms" << std::endl;
-	double gpu_time = compute_disparity_gpu(im_left, im_right, win_size, max_range, disp_map_gpu);
-	std::cout << "time elapsed on gpu: " << gpu_time <<" ms" << std::endl;
+	double sum_time_gpu = 0.0, sum_time_cpu = 0.0;
+	for (int i = 0; i < 5; i++)
+	{
+		double cpu_time = compute_disparity (im_left, im_right, win_size, max_range, disp_map);
+		sum_time_cpu += cpu_time;
+		double gpu_time = compute_disparity_gpu(im_left, im_right, win_size, max_range, disp_map_gpu);
+		sum_time_gpu += gpu_time;
+
+	}
+	std::cout << "Mean time elapsed on cpu: " << sum_time_cpu/5 <<" ms" << std::endl;
+	std::cout << "Mean time elapsed on gpu: " << sum_time_gpu/5 <<" ms" << std::endl;
 	
 	cv::imshow("left", im_left);
 	cv::imshow("right", im_right);

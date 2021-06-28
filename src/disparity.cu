@@ -79,17 +79,17 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
     //Output
     unsigned char *disp_map_ptr;	
 	cudaMalloc(&disp_map_ptr, frameByteSize);
-
+    
+    //Prefetching data
+    cudaMemPrefetchAsync(im_letf_ptr, frameByteSize, deviceId);
+    cudaMemPrefetchAsync(im_right_ptr, frameByteSize, deviceId);
+    cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, deviceId);
    
     //Copying data
     cudaMemcpy(im_letf_ptr, im_left.ptr(), frameByteSize, cudaMemcpyHostToDevice);
     cudaMemcpy(im_right_ptr, im_right.ptr(), frameByteSize, cudaMemcpyHostToDevice);
     cudaMemset(disp_map_ptr, 0, frameByteSize*sizeof(uchar));
 
-    //Prefetching data
-    cudaMemPrefetchAsync(im_letf_ptr, frameByteSize, deviceId);
-    cudaMemPrefetchAsync(im_right_ptr, frameByteSize, deviceId);
-    cudaMemPrefetchAsync(disp_map_ptr, frameByteSize, deviceId);
 
     const dim3 threadsPerBlock(32, 32);
 	const dim3 blocksPerGrid(cv::cudev::divUp(disp_map.cols, threadsPerBlock.x), 
