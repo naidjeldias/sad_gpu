@@ -2,7 +2,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/cuda.hpp>
 #include <chrono>
-#include <device_launch_parameters.h>
 
 double compute_disparity_gpu
 (
