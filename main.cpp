@@ -60,21 +60,21 @@ int main(int argc, const char* argv[])
 
 	std::cout << "SpeedUp (Tcpu/Tgpu): " << mean_time_cpu / mean_time_gpu << std::endl;
 	
-	cv::imshow("left", im_left);
-	cv::imshow("right", im_right);
+//	cv::imshow("left", im_left);
+//	cv::imshow("right", im_right);
 
 	//Normalization for visualization purpose
-	cv::medianBlur(disp_map,disp_map,3);
-	cv::normalize(disp_map,disp_map,0,255,cv::NORM_MINMAX,CV_8UC1);
-	cv::imshow("disparity", disp_map);
+//	cv::medianBlur(disp_map,disp_map,3);
+//	cv::normalize(disp_map,disp_map,0,255,cv::NORM_MINMAX,CV_8UC1);
+//	cv::imshow("disparity", disp_map);
 	
 	//Normalization for visualization purpose
-	cv::medianBlur(disp_map_gpu,disp_map_gpu,3);
-	cv::normalize(disp_map_gpu,disp_map_gpu,0,255,cv::NORM_MINMAX,CV_8UC1);
-	cv::imshow("disparity_gpu", disp_map_gpu);
+//	cv::medianBlur(disp_map_gpu,disp_map_gpu,3);
+//	cv::normalize(disp_map_gpu,disp_map_gpu,0,255,cv::NORM_MINMAX,CV_8UC1);
+//	cv::imshow("disparity_gpu", disp_map_gpu);
 
-	// cv::imwrite("gpu_map.png", disp_map_gpu);
-	// cv::imwrite("cpu_map.png", disp_map);
+	cv::imwrite("gpu_map.png", disp_map_gpu);
+	cv::imwrite("cpu_map.png", disp_map);
 	
 	cv::waitKey(0);
 	cv::destroyAllWindows();
