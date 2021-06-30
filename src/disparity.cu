@@ -1,5 +1,4 @@
 #include <disparity.cuh>
-#include <opencv2/cudev.hpp>
 #include <cuda_runtime.h>
 
 __device__ int compute_sad(unsigned char *im_l, unsigned char *im_r,
@@ -90,8 +89,8 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
     cudaMemset(disp_map_ptr, 0, frame_size*sizeof(uchar));
 
     const dim3 threadsPerBlock(16, 16);
-	const dim3 blocksPerGrid(cv::cudev::divUp(disp_map.cols, threadsPerBlock.x), 
-                        cv::cudev::divUp(disp_map.rows, threadsPerBlock.y));
+	const dim3 blocksPerGrid(((disp_map.cols + threadsPerBlock.x - 1)/threadsPerBlock.x), 
+                        ((disp_map.rows + threadsPerBlock.y - 1)/threadsPerBlock.y));
     
 
     compute_sad<<<blocksPerGrid, threadsPerBlock>>>(im_letf_ptr, im_right_ptr, win_size, disp_range, disp_map_ptr, disp_map.cols, disp_map.rows);
