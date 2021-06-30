@@ -8,17 +8,29 @@ int main(int argc, const char* argv[])
 {	
 	if (argc <= 2)
 	{
-		std::cout << "Usage: disparity <WIN_SIZE> <MAX_DISP_RANGE>" << std::endl;
+		std::cout << "Usage: disparity <WIN_SIZE> <MAX_DISP_RANGE> [<RESOLUTION> (F - full size; H - Half size)]" << std::endl;
 		return 0;
 	}
 
 	unsigned int win_size 	= std::atoi(argv[1]);
-	unsigned int max_range 	= std::atoi(argv[2]);	
+	unsigned int max_range 	= std::atoi(argv[2]);
 
+	cv::Mat im_left, im_right;
 	//TO DO: image padding
 	//Input
-    cv::Mat im_left     = cv::imread("images/im2.ppm", cv::IMREAD_GRAYSCALE);
-    cv::Mat im_right    = cv::imread("images/im6.ppm", cv::IMREAD_GRAYSCALE);
+	if (argc == 3)
+	{
+		im_left     = cv::imread("images/im2.ppm", cv::IMREAD_GRAYSCALE);
+    	im_right    = cv::imread("images/im6.ppm", cv::IMREAD_GRAYSCALE);
+	}else
+	{	
+		std::string resolution 	= argv[3];	
+		std::string left_file = "images/im2"+resolution+".ppm";
+		std::string right_file = "images/im6"+resolution+".ppm";
+		im_left     = cv::imread(left_file, cv::IMREAD_GRAYSCALE);
+    	im_right    = cv::imread(right_file, cv::IMREAD_GRAYSCALE);
+	}
+
 
 
 	//Output
@@ -31,7 +43,7 @@ int main(int argc, const char* argv[])
 		return -1;
 	}
 
-	std::cout << "computing disparity with win size "<< win_size << " and max disparity equal to "<< max_range << std::endl;
+	std::cout << "computing disparity with win size "<< win_size << " and max disparity equal to "<< max_range << "image resolution "<< im_left.cols << " X " << im_left.rows <<std::endl;
 	double sum_time_gpu = 0.0, sum_time_cpu = 0.0;
 	for (int i = 0; i < 5; i++)
 	{
@@ -41,8 +53,12 @@ int main(int argc, const char* argv[])
 		sum_time_gpu += gpu_time;
 
 	}
-	std::cout << "Mean time elapsed on cpu: " << sum_time_cpu/5 <<" ms" << std::endl;
-	std::cout << "Mean time elapsed on gpu: " << sum_time_gpu/5 <<" ms" << std::endl;
+	double mean_time_cpu = sum_time_cpu/5;
+	double mean_time_gpu = sum_time_gpu/5;
+	std::cout << "Mean time elapsed on cpu: " << mean_time_cpu <<" ms" << std::endl;
+	std::cout << "Mean time elapsed on gpu: " << mean_time_gpu <<" ms" << std::endl;
+
+	std::cout << "SpeedUp (Tcpu/Tgpu): " << mean_time_cpu / mean_time_gpu << std::endl;
 	
 	cv::imshow("left", im_left);
 	cv::imshow("right", im_right);

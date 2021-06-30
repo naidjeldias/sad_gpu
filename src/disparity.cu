@@ -61,7 +61,7 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
 {
     int deviceId;
     cudaGetDevice(&deviceId);
-    unsigned int frameByteSize = im_left.rows * im_left.cols;
+    unsigned int frame_size = im_left.rows * im_left.cols;
 
     cudaError_t dispMapErr;
     cudaError_t asyncErr;
@@ -72,20 +72,24 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
 
     //Input 
     unsigned char *im_letf_ptr;
-    cudaMalloc(&im_letf_ptr, frameByteSize);
+    cudaMallocManaged(&im_letf_ptr, frame_size*sizeof(uchar));
     unsigned char *im_right_ptr;
-    cudaMalloc(&im_right_ptr, frameByteSize);
+    cudaMallocManaged(&im_right_ptr, frame_size*sizeof(uchar));
+
+    cudaMemPrefetchAsync(im_letf_ptr, frame_size, deviceId);
+    cudaMemPrefetchAsync(im_right_ptr, frame_size, deviceId);
 
     //Output
     unsigned char *disp_map_ptr;	
-	cudaMalloc(&disp_map_ptr, frameByteSize);
+	cudaMallocManaged(&disp_map_ptr, frame_size*sizeof(uchar));
+    cudaMemPrefetchAsync(disp_map_ptr, frame_size, cudaCpuDeviceId);
 
     //Copying data
-    cudaMemcpy(im_letf_ptr, im_left.ptr(), frameByteSize, cudaMemcpyHostToDevice);
-    cudaMemcpy(im_right_ptr, im_right.ptr(), frameByteSize, cudaMemcpyHostToDevice);
-    cudaMemset(disp_map_ptr, 0, frameByteSize*sizeof(uchar));
+    cudaMemcpy(im_letf_ptr, im_left.ptr(), frame_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(im_right_ptr, im_right.ptr(), frame_size, cudaMemcpyHostToDevice);
+    cudaMemset(disp_map_ptr, 0, frame_size*sizeof(uchar));
 
-    const dim3 threadsPerBlock(32, 32);
+    const dim3 threadsPerBlock(16, 16);
 	const dim3 blocksPerGrid(cv::cudev::divUp(disp_map.cols, threadsPerBlock.x), 
                         cv::cudev::divUp(disp_map.rows, threadsPerBlock.y));
     
@@ -99,7 +103,7 @@ double compute_disparity_gpu (const cv::Mat &im_left, const cv::Mat &im_right,
       if(asyncErr != cudaSuccess) printf("Device synchrinize error: %s\n", cudaGetErrorString(asyncErr));
 
     //Copy data from device to host
-    cudaMemcpy(disp_map.ptr(), disp_map_ptr, frameByteSize, cudaMemcpyDeviceToHost);
+    cudaMemcpy(disp_map.ptr(), disp_map_ptr, frame_size, cudaMemcpyDeviceToHost);
 
     auto end = std::chrono::steady_clock::now();
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
