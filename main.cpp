@@ -43,7 +43,7 @@ int main(int argc, const char* argv[])
 		return -1;
 	}
 
-	std::cout << "computing disparity with win size "<< win_size << " and max disparity equal to "<< max_range << "image resolution "<< im_left.cols << " X " << im_left.rows <<std::endl;
+	std::cout << "computing disparity with win size "<< win_size << " and max disparity equal to "<< max_range << " image resolution "<< im_left.cols << " X " << im_left.rows <<std::endl;
 	double sum_time_gpu = 0.0, sum_time_cpu = 0.0;
 	for (int i = 0; i < 5; i++)
 	{
@@ -60,17 +60,18 @@ int main(int argc, const char* argv[])
 
 	std::cout << "SpeedUp (Tcpu/Tgpu): " << mean_time_cpu / mean_time_gpu << std::endl;
 	
+	//Normalization for visualization purpose
+	cv::medianBlur(disp_map_gpu,disp_map_gpu,3);
+	cv::normalize(disp_map_gpu,disp_map_gpu,0,255,cv::NORM_MINMAX,CV_8UC1);
+
+	cv::medianBlur(disp_map,disp_map,3);
+	cv::normalize(disp_map,disp_map,0,255,cv::NORM_MINMAX,CV_8UC1);
+
+
 //	cv::imshow("left", im_left);
 //	cv::imshow("right", im_right);
 
-	//Normalization for visualization purpose
-//	cv::medianBlur(disp_map,disp_map,3);
-//	cv::normalize(disp_map,disp_map,0,255,cv::NORM_MINMAX,CV_8UC1);
 //	cv::imshow("disparity", disp_map);
-	
-	//Normalization for visualization purpose
-//	cv::medianBlur(disp_map_gpu,disp_map_gpu,3);
-//	cv::normalize(disp_map_gpu,disp_map_gpu,0,255,cv::NORM_MINMAX,CV_8UC1);
 //	cv::imshow("disparity_gpu", disp_map_gpu);
 
 	cv::imwrite("gpu_map.png", disp_map_gpu);
