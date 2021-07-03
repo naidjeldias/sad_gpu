@@ -67,18 +67,20 @@ int main(int argc, const char* argv[])
 	cv::medianBlur(disp_map,disp_map,3);
 	cv::normalize(disp_map,disp_map,0,255,cv::NORM_MINMAX,CV_8UC1);
 
+#ifdef ENABLE_DISPLAY_IMAGE
+	cv::imshow("left", im_left);
+	cv::imshow("right", im_right);
 
-//	cv::imshow("left", im_left);
-//	cv::imshow("right", im_right);
+	cv::imshow("disparity", disp_map);
+	cv::imshow("disparity_gpu", disp_map_gpu);
 
-//	cv::imshow("disparity", disp_map);
-//	cv::imshow("disparity_gpu", disp_map_gpu);
-
-	cv::imwrite("gpu_map.png", disp_map_gpu);
-	cv::imwrite("cpu_map.png", disp_map);
-	
 	cv::waitKey(0);
 	cv::destroyAllWindows();
+#else
+	cv::imwrite("gpu_map.png", disp_map_gpu);
+	cv::imwrite("cpu_map.png", disp_map);
+
+#endif // ENABLE_DISPLAY_IMAGE
 
     return 0;
 }

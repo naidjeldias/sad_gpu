@@ -4,6 +4,15 @@ project(sad_cpu_gpu LANGUAGES CXX CUDA)
 
 find_package(OpenCV REQUIRED)
 
+option(WITH_DISPLAY "Build with opencv imshow() display function" OFF)
+
+if(WITH_DISPLAY)
+  message(STATUS "WITH IMAGE DISPLAY FUNCTION")
+  add_definitions(-DENABLE_DISPLAY_IMAGE)
+else()
+  message(STATUS "WITHOUT IMAGE DISPLAY FUNCTION")
+endif()
+
 include_directories(
         ${PROJECT_SOURCE_DIR}/include
 )
