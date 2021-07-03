@@ -36,7 +36,7 @@ void compute_sad (unsigned char *im_l, unsigned char *im_r,
                 {
                     for(int d = 0; d < disp_range; d++)
                     {
-                        if((x + d) >= (width - win_size/2))
+                        if((x - d) < win_size/2)
                             break;
                         int sad_value = compute_sad(im_l, im_r, win_size, x, y, d, width);
                         if (sad_value < min_sad)

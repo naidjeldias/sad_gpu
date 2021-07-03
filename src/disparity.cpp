@@ -11,7 +11,7 @@ double compute_disparity ( const cv::Mat &im_l, const cv::Mat &im_r, const int &
             int disp_value  = 0.0;
             for(int d = 0; d < disp_range; d++)
             {
-                if((x + d) >= (im_l.cols - win_size/2))
+                if((x - d) < win_size/2)
                     break;
                 int sad_value = compute_sad(im_l, im_r, win_size, x, y, d);
                 if (sad_value < min_sad)
