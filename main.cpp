@@ -16,7 +16,7 @@ int main(int argc, const char* argv[])
 	unsigned int max_range 	= std::atoi(argv[2]);
 
 	cv::Mat im_left, im_right;
-	//TO DO: image padding
+	
 	//Input
 	if (argc == 3)
 	{

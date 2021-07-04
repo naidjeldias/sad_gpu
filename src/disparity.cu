@@ -1,6 +1,18 @@
 #include <disparity.cuh>
 #include <cuda_runtime.h>
 
+/**
+* Calcula o valor de SAD para um determinado pixel com base na sua vizinhança
+*
+* @param[in] im_l ponteiro do vetor contendo os pixels da imagem esquerda da câmera estéreo
+* @param[in] im_r ponteiro do vetor contendo os pixels da imagem direita da câmera estéreo
+* @param[in] win_size dimensao da janela de vizinhança considerando uma janela quadrada [win_size X win_size]
+* @param[in] x índice da coluna do pixel em questão
+* @param[in] y índice da linha do pixel em questão
+* @param[in] width largura da imagem para realizar o acesso a imagem vetorizada
+* @param[in] d nível de disparidade a qual quer se calcular o valor de SAD
+* @param[out] sad_value resultado da métrica SAD
+*/
 __device__ int compute_sad(unsigned char *im_l, unsigned char *im_r,
             const int &win_size, const int x, const int y, const int d, const int width)
 {
@@ -12,6 +24,18 @@ __device__ int compute_sad(unsigned char *im_l, unsigned char *im_r,
             sad_value += abs((int)im_l[(y+j) * width + (x+i)] - (int)im_r[(y+j) * width + (x-d+i)]);
 	return sad_value;
 }
+
+/**
+* Cria um mapa de disparidade de duas imagens de um par estéreo
+*
+* @param[in] im_l ponteiro do vetor contendo os pixels da imagem esquerda da câmera estéreo
+* @param[in] im_r ponteiro do vetor contendo os pixels da imagem direita da câmera estéreo
+* @param[in] win_size dimensao da janela de vizinhança considerando uma janela quadrada [win_size X win_size]
+* @param[in] disp_range nível de disparidade máxima 
+* @param[in] width largura da imagem para realizar o acesso a imagem vetorizada
+* @param[out] dis_map ponteiro do vetor contendo o resultado da disparidade encontrada para cada pixel 
+*/
+
 __global__ 
 void compute_sad (unsigned char *im_l, unsigned char *im_r,
                 const int win_size, const int disp_range, unsigned char *disp_map, const int width,
